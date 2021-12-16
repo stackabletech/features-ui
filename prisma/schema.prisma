@@ -1,0 +1,49 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model Category {
+  id               Int          @id(map: "categories_pk") @default(autoincrement())
+  name             String       @db.VarChar
+  parent_id        Int?
+  categories       Category?  @relation("categoriesTocategories_parent_id", fields: [parent_id], references: [id], onDelete: NoAction, onUpdate: NoAction)
+  other_categories Category[] @relation("categoriesTocategories_parent_id")
+  features         Feature[]
+
+  @@map("categories")
+}
+
+model Feature {
+  id               Int                @id(map: "features_pk") @default(autoincrement())
+  name             String             @db.VarChar
+  category_id      Int
+  categories       Category         @relation(fields: [category_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "features_categories_id_fk")
+  product_features ProductFeature[]
+
+  @@map("features")
+}
+
+model ProductFeature {
+  product_id    Int
+  feature_id    Int
+  implemented   Boolean? @default(false)
+  scheduled_for String?  @db.VarChar
+  features      Feature @relation(fields: [feature_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "product_features_features_id_fk")
+  products      Product @relation(fields: [product_id], references: [id], onDelete: NoAction, onUpdate: NoAction, map: "product_features_products_id_fk")
+
+  @@id([product_id, feature_id], map: "product_features_pk")
+  @@map("product_features")
+}
+
+model Product {
+  id               Int                @id(map: "products_pk") @default(autoincrement())
+  name             String             @unique(map: "products_name_uindex") @db.VarChar
+  product_features ProductFeature[]
+
+  @@map("products")
+}
